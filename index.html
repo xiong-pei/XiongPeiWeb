@@ -42,8 +42,90 @@
                 </div>
             </article>
 
+            <!-- 照片上传工具 -->
+            <article class="tool-card ink-upload-card">
+                <div class="ink-wash-container">
+                    <div class="ink-wash"></div>
+                    <div class="tool-icon">📷</div>
+                    <h3 class="tool-title">照片管理工具</h3>
+                    <p class="tool-desc">上传并管理您的摄影作品</p>
+                    <div class="upload-container">
+                        <div class="drop-zone" id="dropZone">
+                            <span>拖放照片至此或点击选择</span>
+                            <input type="file" id="fileInput" accept="image/*" multiple hidden>
+                        </div>
+                        <div id="previewGrid" class="preview-grid"></div>
+                    </div>
+                </div>
+            </article>
             <!-- 其他工具卡片结构相同... -->
         </div>
     </main>
 </body>
 </html>
+<script>
+// 照片上传功能
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previewGrid = document.getElementById('previewGrid');
+
+// 初始化本地存储数据
+let photoMetadata = JSON.parse(localStorage.getItem('photos')) || [];
+
+// 拖放事件处理
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-active');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-active');
+});
+
+// 文件处理函数
+const handleFiles = (files) => {
+    Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+
+        // 生成预览
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.classList.add('preview-thumbnail');
+            previewGrid.appendChild(img);
+
+            // 存储元数据
+            photoMetadata.push({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: file.lastModified,
+                preview: e.target.result
+            });
+            localStorage.setItem('photos', JSON.stringify(photoMetadata));
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
+// 事件监听
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-active');
+    handleFiles(e.dataTransfer.files);
+});
+
+// 初始化时加载已有照片
+window.addEventListener('load', () => {
+    photoMetadata.forEach(photo => {
+        const img = document.createElement('img');
+        img.src = photo.preview;
+        img.classList.add('preview-thumbnail');
+        previewGrid.appendChild(img);
+    });
+});
+</script>
